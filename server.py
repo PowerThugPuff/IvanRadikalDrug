@@ -1,6 +1,7 @@
 import re
 import os
 import json
+import time
 import random
 import asyncio
 from datetime import datetime
@@ -283,6 +284,11 @@ _last_response: dict[int, str] = {}
 # запоминаем уже обработанные media_group_id (альбомы приходят как несколько сообщений)
 _processed_media_groups: set[str] = set()
 
+# Если один и тот же человек пересылает несколько сообщений подряд одним постом
+# (например текст + отдельное видео), отвечаем только на первое в течение окна
+_last_reply_time: dict[int, float] = {}
+REPLY_COOLDOWN_SECONDS = 4
+
 
 def pick_response(pool: list[str], chat_id: int) -> str:
     """Выбирает случайный ответ из pool, избегая повтора последнего в этом чате."""
@@ -377,6 +383,16 @@ async def handle_forwarded(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     # 1) Это должна быть пересылка
     if not msg.forward_origin:
         return
+
+    # Если это альбом (несколько фото/видео одним постом), Telegram присылает
+    # каждый элемент отдельным апдейтом — отвечаем только на первый из них
+    if msg.media_group_id:
+        if msg.media_group_id in _processed_media_groups:
+            return
+        _processed_media_groups.add(msg.media_group_id)
+        # не даём множеству расти бесконечно
+        if len(_processed_media_groups) > 1000:
+            _processed_media_groups.clear()
 
     # 2) Если пересылку сделал не Ваня — отдельная короткая реакция
     if update.effective_user.id != ALLOWED_USER_ID:
