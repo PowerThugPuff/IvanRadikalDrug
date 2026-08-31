@@ -396,7 +396,7 @@ async def handle_forwarded(update: Update, context: ContextTypes.DEFAULT_TYPE) -
 
     # 2) Если пересылку сделал не Ваня — отдельная короткая реакция
     if update.effective_user.id != ALLOWED_USER_ID:
-        await msg.reply_text("ИванАНТИБАЗА")
+        await msg.reply_text("ИванАНТИБАЗА, ТЫ НЕ ИВАН !!!!!")
         return
 
     chat_id = msg.chat_id
