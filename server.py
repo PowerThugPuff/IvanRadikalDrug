@@ -328,6 +328,10 @@ def increment_counter(user_id: int) -> int:
 
 LINK_RE = re.compile(r"https?://\S+")
 
+# Если у фото/видео/голосового подпись длиннее этого числа символов — считаем,
+# что это пересланная новость с картинкой, а не "просто фото" от Вани.
+CONTENT_TEXT_THRESHOLD = 20
+
 # Фирменная подпись, добавляется в конец каждого ответа бота
 SIGNATURE = "IVAN=BAZA"
 
@@ -370,8 +374,9 @@ async def handle_forwarded(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     if not msg.forward_origin:
         return
 
-    # 2) И её сделал наш пользователь
+    # 2) Если пересылку сделал не Ваня — отдельная короткая реакция
     if update.effective_user.id != ALLOWED_USER_ID:
+        await msg.reply_text("ИванАНТИБАЗА")
         return
 
     chat_id = msg.chat_id
@@ -382,11 +387,15 @@ async def handle_forwarded(update: Update, context: ContextTypes.DEFAULT_TYPE) -
 
     text = msg.text or msg.caption or ""
 
-    # Приоритет: ключевые слова -> тип контента -> общий набор
+    # Приоритет: ключевые слова -> тип контента (только если подпись короткая,
+    # иначе это новость с картинкой, а не "просто фото") -> общий набор
     pool = detect_keyword_pool(text)
     if pool is None:
-        content_type = detect_content_type(msg)
-        pool = CONTENT_RESPONSES.get(content_type, RESPONSES)
+        if len(text.strip()) <= CONTENT_TEXT_THRESHOLD:
+            content_type = detect_content_type(msg)
+            pool = CONTENT_RESPONSES.get(content_type, RESPONSES)
+        else:
+            pool = RESPONSES
 
     reply = pick_response(pool, chat_id)
 
@@ -407,7 +416,7 @@ def main():
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(
-        MessageHandler(filters.FORWARDED & filters.User(ALLOWED_USER_ID), handle_forwarded)
+        MessageHandler(filters.FORWARDED, handle_forwarded)
     )
 
     app.run_polling()
