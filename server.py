@@ -394,7 +394,18 @@ async def handle_forwarded(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         if len(_processed_media_groups) > 1000:
             _processed_media_groups.clear()
 
-    
+    # Общая защита от "пачки" форвардов подряд (текст + видео и т.п. как отдельные
+    # сообщения одного поста) — отвечаем только на первое сообщение в окне времени
+    user_id = update.effective_user.id
+    now = time.monotonic()
+    if now - _last_reply_time.get(user_id, 0.0) < REPLY_COOLDOWN_SECONDS:
+        return
+    _last_reply_time[user_id] = now
+
+    # 2) Если пересылку сделал не Ваня — отдельная короткая реакция
+    if update.effective_user.id != ALLOWED_USER_ID:
+        await msg.reply_text("ИванАНТИБАЗА")
+        return
 
     chat_id = msg.chat_id
 
