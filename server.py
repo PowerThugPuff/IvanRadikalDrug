@@ -402,7 +402,11 @@ async def handle_forwarded(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         return
     _last_reply_time[user_id] = now
 
-  
+    # 2) И её сделал наш пользователь
+    if update.effective_user.id != ALLOWED_USER_ID:
+        return
+
+    chat_id = msg.chat_id
 
     # "Печатает..." для комедийного эффекта перед ответом
     await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
@@ -439,7 +443,7 @@ def main():
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(
-        MessageHandler(filters.FORWARDED, handle_forwarded)
+        MessageHandler(filters.FORWARDED & filters.User(ALLOWED_USER_ID), handle_forwarded)
     )
 
     app.run_polling()
