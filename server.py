@@ -402,12 +402,7 @@ async def handle_forwarded(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         return
     _last_reply_time[user_id] = now
 
-    # 2) Если пересылку сделал не Ваня — отдельная короткая реакция
-    if update.effective_user.id != ALLOWED_USER_ID:
-        await msg.reply_text("ИванАНТИБАЗА")
-        return
-
-    chat_id = msg.chat_id
+  
 
     # "Печатает..." для комедийного эффекта перед ответом
     await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
