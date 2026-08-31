@@ -394,10 +394,7 @@ async def handle_forwarded(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         if len(_processed_media_groups) > 1000:
             _processed_media_groups.clear()
 
-    # 2) Если пересылку сделал не Ваня — отдельная короткая реакция
-    if update.effective_user.id != ALLOWED_USER_ID:
-        await msg.reply_text("ПОШЕЛ НАХУЙ")
-        return
+    
 
     chat_id = msg.chat_id
 
