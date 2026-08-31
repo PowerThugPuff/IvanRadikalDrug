@@ -279,6 +279,10 @@ CONTENT_RESPONSES = {
 
 _last_response: dict[int, str] = {}
 
+# Чтобы не отвечать на каждое фото/видео из одного альбома отдельно —
+# запоминаем уже обработанные media_group_id (альбомы приходят как несколько сообщений)
+_processed_media_groups: set[str] = set()
+
 
 def pick_response(pool: list[str], chat_id: int) -> str:
     """Выбирает случайный ответ из pool, избегая повтора последнего в этом чате."""
